@@ -364,7 +364,7 @@
 <body>
     <div class="atm-container">
         <div class="atm-header">
-            <div class="bank-name">SECURE BANK ATM</div>
+            <div class="bank-name">SECURE LBTS ATM</div>
             <div class="atm-subtitle">
                 <span class="status-light"></span>
                 Python Flask Powered
@@ -378,7 +378,7 @@
         <div class="screen">
             <!-- Login Screen -->
             <div class="screen-content active" id="login-screen">
-                <h3>Welcome to Secure Bank ATM</h3>
+                <h3>Welcome to LBTS ATM</h3>
                 <p>Please enter your 4-digit PIN:</p>
                 <p><small>Customer PIN: 1234 | Admin Password: 4321</small></p>
                 <div class="input-display" id="pin-display">****</div>
@@ -457,6 +457,9 @@
             <button class="key" data-key="0">0</button>
             <button class="key enter" id="enter-key">ENT</button>
         </div>
+        <div class="function-buttons">
+            <button class="function-btn" id="back-btn">Created By: Yassmin Araho</button>
+        </div>    
     </div>
 
     <div id="loading" class="loading">
@@ -738,7 +741,7 @@
             isAdmin = false;
             showScreen('login-screen');
             clearInput();
-            showMessage('Thank you for using Secure Bank ATM!', 'success');
+            showMessage('Thank you for using LBTS ATM!', 'success');
         }
 
         function help() {

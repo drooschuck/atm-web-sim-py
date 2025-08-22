@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATM Simulator - Python Flask</title>
+    <meta name="description" content="Python Flask ATM simulator with full banking functionality">
+    <meta name="keywords" content="ATM, simulator, banking, Python, Flask">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏧</text></svg>">
+    
+    <style>
+        /* ATM Simulator Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .atm-container {
+            background: #2c3e50;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+            border: 3px solid #34495e;
+        }
+
+        .atm-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .bank-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .atm-subtitle {
+            font-size: 0.9em;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .status-light {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #10b981;
+            display: inline-block;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 10px #10b981;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+        }
+
+        .card-slot {
+            background: #111827;
+            border: 2px dashed #6b7280;
+            border-radius: 5px;
+            color: #9ca3af;
+            padding: 12px;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .screen {
+            background: #1e3a8a;
+            border: 3px solid #374151;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 320px;
+            color: #60a5fa;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            position: relative;
+            overflow-y: auto;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .screen-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .screen-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .screen-content h3 {
+            color: #93c5fd;
+            margin-bottom: 15px;
+            font-size: 16px;
+            text-align: center;
+            border-bottom: 1px solid #3b82f6;
+            padding-bottom: 8px;
+        }
+
+        .input-display {
+            background: #374151;
+            border: 1px solid #6b7280;
+            border-radius: 5px;
+            color: #60a5fa;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            padding: 12px;
+            margin: 10px 0;
+            text-align: center;
+            min-height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .menu-item {
+            background: #1e40af;
+            border: 1px solid #3b82f6;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            margin: 8px 0;
+            padding: 12px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            user-select: none;
+        }
+
+        .menu-item:hover {
+            background: #3b82f6;
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .balance-display {
+            background: linear-gradient(135deg, #065f46, #047857);
+            border-radius: 8px;
+            color: #6ee7b7;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 20px;
+            text-align: center;
+            margin: 15px 0;
+            box-shadow: 0 4px 12px rgba(6, 95, 70, 0.3);
+            border: 1px solid #10b981;
+        }
+
+        .error-message {
+            background: #7f1d1d;
+            border-radius: 5px;
+            color: #fca5a5;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #dc2626;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .success-message {
+            background: #064e3b;
+            border-radius: 5px;
+            color: #6ee7b7;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #10b981;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .transaction-log {
+            background: #374151;
+            border-radius: 5px;
+            color: #d1d5db;
+            font-size: 11px;
+            max-height: 180px;
+            overflow-y: auto;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #6b7280;
+        }
+
+        .admin-indicator {
+            background: #7c2d12;
+            color: #fed7aa;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 10px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-weight: bold;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.6; }
+        }
+
+        .function-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 8px;
+        }
+
+        .function-btn {
+            background: linear-gradient(135deg, #7c3aed, #a855f7);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex: 1;
+            box-shadow: 0 2px 4px rgba(124, 58, 237, 0.3);
+        }
+
+        .function-btn:hover {
+            background: linear-gradient(135deg, #8b5cf6, #a855f7);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(124, 58, 237, 0.4);
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .key {
+            background: linear-gradient(135deg, #4b5563, #6b7280);
+            border: 2px solid #6b7280;
+            border-radius: 8px;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            padding: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            user-select: none;
+        }
+
+        .key:hover {
+            background: linear-gradient(135deg, #6b7280, #9ca3af);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .key.clear {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            border-color: #dc2626;
+        }
+
+        .key.clear:hover {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+        }
+
+        .key.enter {
+            background: linear-gradient(135deg, #059669, #10b981);
+            border-color: #059669;
+        }
+
+        .key.enter:hover {
+            background: linear-gradient(135deg, #10b981, #34d399);
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #374151;
+            border-top: 4px solid #10b981;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .atm-container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .screen {
+                min-height: 280px;
+                padding: 15px;
+            }
+            
+            .keypad {
+                gap: 8px;
+            }
+            
+            .key {
+                padding: 15px;
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="atm-container">
+        <div class="atm-header">
+            <div class="bank-name">SECURE BANK ATM</div>
+            <div class="atm-subtitle">
+                <span class="status-light"></span>
+                Python Flask Powered
+            </div>
+        </div>
+
+        <div class="card-slot">
+            Insert your card or enter PIN below
+        </div>
+
+        <div class="screen">
+            <!-- Login Screen -->
+            <div class="screen-content active" id="login-screen">
+                <h3>Welcome to Secure Bank ATM</h3>
+                <p>Please enter your 4-digit PIN:</p>
+                <p><small>Customer PIN: 1234 | Admin Password: 4321</small></p>
+                <div class="input-display" id="pin-display">****</div>
+                <div id="login-message"></div>
+            </div>
+
+            <!-- Main Menu Screen -->
+            <div class="screen-content" id="main-menu">
+                <h3>Main Menu</h3>
+                <p>Please select a transaction:</p>
+                <div class="menu-item" data-action="balance">A. View Balance</div>
+                <div class="menu-item" data-action="withdraw">B. Withdraw Cash</div>
+                <div class="menu-item" data-action="change-pin">C. Change PIN</div>
+                <div class="menu-item" data-action="transactions">D. View Transactions</div>
+                <div class="menu-item" data-action="exit">E. Exit</div>
+            </div>
+
+            <!-- Balance Screen -->
+            <div class="screen-content" id="balance-screen">
+                <h3>Account Balance</h3>
+                <div class="balance-display" id="balance-amount">£0.00</div>
+                <p>Press any function key to return to main menu</p>
+            </div>
+
+            <!-- Withdraw Screen -->
+            <div class="screen-content" id="withdraw-screen">
+                <h3>Cash Withdrawal</h3>
+                <p>Enter amount (multiples of £10):</p>
+                <div class="input-display" id="withdraw-display">£</div>
+                <div id="withdraw-message"></div>
+            </div>
+
+            <!-- Change PIN Screen -->
+            <div class="screen-content" id="change-pin-screen">
+                <h3>Change PIN</h3>
+                <p id="pin-prompt">Enter current PIN:</p>
+                <div class="input-display" id="new-pin-display">****</div>
+                <div id="pin-message"></div>
+            </div>
+
+            <!-- Transaction History Screen -->
+            <div class="screen-content" id="history-screen">
+                <h3>Transaction History</h3>
+                <div class="transaction-log" id="transaction-list"></div>
+                <p>Press any function key to return to main menu</p>
+            </div>
+
+            <!-- Admin Screen -->
+            <div class="screen-content" id="admin-screen">
+                <div class="admin-indicator">ADMIN MODE</div>
+                <h3>Admin Access</h3>
+                <div class="menu-item" data-action="admin-transactions">1. View All Transactions</div>
+                <div class="menu-item" data-action="admin-exit">2. Exit Admin Mode</div>
+                <div class="transaction-log" id="admin-transaction-list" style="display: none;"></div>
+            </div>
+        </div>
+
+        <div class="function-buttons">
+            <button class="function-btn" id="back-btn">← Back</button>
+            <button class="function-btn" id="menu-btn">Menu</button>
+            <button class="function-btn" id="clear-btn">Clear</button>
+            <button class="function-btn" id="help-btn">Help</button>
+        </div>
+
+        <div class="keypad">
+            <button class="key" data-key="1">1</button>
+            <button class="key" data-key="2">2</button>
+            <button class="key" data-key="3">3</button>
+            <button class="key" data-key="4">4</button>
+            <button class="key" data-key="5">5</button>
+            <button class="key" data-key="6">6</button>
+            <button class="key" data-key="7">7</button>
+            <button class="key" data-key="8">8</button>
+            <button class="key" data-key="9">9</button>
+            <button class="key clear" id="clear-key">CLR</button>
+            <button class="key" data-key="0">0</button>
+            <button class="key enter" id="enter-key">ENT</button>
+        </div>
+    </div>
+
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+        <p>Processing...</p>
+    </div>
+
+    <script>
+        // ATM Frontend JavaScript for Python Flask Backend
+        
+        let currentScreen = 'login-screen';
+        let currentInput = '';
+        let isLoggedIn = false;
+        let isAdmin = false;
+
+        // API Helper Functions
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            showLoading(true);
+            try {
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+                
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+                
+                const response = await fetch(`/api/${endpoint}`, options);
+                const result = await response.json();
+                
+                showLoading(false);
+                return result;
+            } catch (error) {
+                showLoading(false);
+                showMessage('Network error. Please try again.', 'error');
+                console.error('API Error:', error);
+                throw error;
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'flex' : 'none';
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen-content').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+            currentScreen = screenId;
+            clearInput();
+            clearMessages();
+        }
+
+        function clearMessages() {
+            document.querySelectorAll('.error-message, .success-message').forEach(msg => {
+                msg.remove();
+            });
+        }
+
+        function showMessage(message, type, containerId = null) {
+            clearMessages();
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
+            messageDiv.textContent = message;
+            
+            if (containerId) {
+                const container = document.getElementById(containerId);
+                if (container) {
+                    container.appendChild(messageDiv);
+                }
+            } else {
+                // Show as temporary toast
+                messageDiv.style.position = 'fixed';
+                messageDiv.style.top = '20px';
+                messageDiv.style.right = '20px';
+                messageDiv.style.zIndex = '1000';
+                document.body.appendChild(messageDiv);
+                
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.parentNode.removeChild(messageDiv);
+                    }
+                }, 3000);
+            }
+        }
+
+        function keyPress(digit) {
+            console.log('Key pressed:', digit);
+            if (currentScreen === 'login-screen' || currentScreen === 'change-pin-screen') {
+                if (currentInput.length < 4) {
+                    currentInput += digit;
+                    updatePinDisplay();
+                }
+            } else if (currentScreen === 'withdraw-screen') {
+                currentInput += digit;
+                updateWithdrawDisplay();
+            }
+        }
+
+        function clearInput() {
+            currentInput = '';
+            updateDisplays();
+        }
+
+        function updateDisplays() {
+            updatePinDisplay();
+            updateWithdrawDisplay();
+        }
+
+        function updatePinDisplay() {
+            const pinDisplays = ['pin-display', 'new-pin-display'];
+            pinDisplays.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = '*'.repeat(currentInput.length);
+                }
+            });
+        }
+
+        function updateWithdrawDisplay() {
+            const withdrawDisplay = document.getElementById('withdraw-display');
+            if (withdrawDisplay) {
+                withdrawDisplay.textContent = '£' + currentInput;
+            }
+        }
+
+        async function enterPressed() {
+            console.log('Enter pressed, current screen:', currentScreen);
+            if (currentScreen === 'login-screen') {
+                await handleLogin();
+            } else if (currentScreen === 'withdraw-screen') {
+                await handleWithdraw();
+            } else if (currentScreen === 'change-pin-screen') {
+                await handlePinChange();
+            }
+        }
+
+        async function handleLogin() {
+            if (!currentInput) return;
+
+            const result = await apiCall('login', 'POST', { pin: currentInput });
+            
+            if (result.success) {
+                isLoggedIn = true;
+                isAdmin = result.is_admin;
+                
+                if (isAdmin) {
+                    showScreen('admin-screen');
+                } else {
+                    showScreen('main-menu');
+                    if (result.transaction_count > 0) {
+                        showMessage(`Welcome back! You have ${result.transaction_count} previous transactions.`, 'success');
+                    }
+                }
+            } else {
+                showMessage(result.message, 'error', 'login-screen');
+            }
+            
+            clearInput();
+        }
+
+        async function handleWithdraw() {
+            if (!currentInput) return;
+
+            const result = await apiCall('withdraw', 'POST', { amount: currentInput });
+            
+            if (result.success) {
+                showMessage(result.message, 'success', 'withdraw-screen');
+                document.getElementById('balance-amount').textContent = '£' + result.balance.toFixed(2);
+            } else {
+                showMessage(result.message, 'error', 'withdraw-screen');
+            }
+            
+            clearInput();
+        }
+
+        async function handlePinChange() {
+            if (!currentInput) return;
+
+            const result = await apiCall('change-pin', 'POST', { pin: currentInput });
+            
+            if (result.success) {
+                if (result.complete) {
+                    showMessage(result.message, 'success', 'change-pin-screen');
+                    setTimeout(() => {
+                        showScreen('main-menu');
+                        resetPinChange();
+                    }, 2000);
+                } else {
+                    showMessage(result.message, 'success', 'change-pin-screen');
+                    document.getElementById('pin-prompt').textContent = getPromptForStep(result.step);
+                }
+            } else {
+                showMessage(result.message, 'error', 'change-pin-screen');
+                if (result.step !== undefined) {
+                    document.getElementById('pin-prompt').textContent = getPromptForStep(result.step);
+                }
+            }
+            
+            clearInput();
+        }
+
+        function getPromptForStep(step) {
+            switch (step) {
+                case 0: return 'Enter current PIN:';
+                case 1: return 'Enter new 4-digit PIN:';
+                case 2: return 'Re-enter new PIN to confirm:';
+                default: return 'Enter current PIN:';
+            }
+        }
+
+        async function resetPinChange() {
+            await apiCall('reset-pin-change', 'POST');
+            document.getElementById('pin-prompt').textContent = 'Enter current PIN:';
+        }
+
+        async function showTransactionHistory() {
+            const result = await apiCall('transactions');
+            
+            const transactionList = document.getElementById('transaction-list');
+            if (result.transactions && result.transactions.length > 0) {
+                transactionList.innerHTML = result.transactions.map(tx => `<div>${tx}</div>`).join('');
+            } else {
+                transactionList.innerHTML = '<p>No transactions found.</p>';
+            }
+            
+            showScreen('history-screen');
+        }
+
+        async function showAllTransactions() {
+            const result = await apiCall('transactions');
+            
+            const adminList = document.getElementById('admin-transaction-list');
+            if (result.transactions && result.transactions.length > 0) {
+                adminList.innerHTML = '<h4>All Withdrawal Transactions:</h4>' + 
+                    result.transactions.map(tx => `<div>${tx}</div>`).join('');
+            } else {
+                adminList.innerHTML = '<p>No transactions found.</p>';
+            }
+            adminList.style.display = 'block';
+        }
+
+        async function loadBalance() {
+            if (!isAdmin && isLoggedIn) {
+                const result = await apiCall('balance');
+                if (result.balance !== undefined) {
+                    document.getElementById('balance-amount').textContent = '£' + result.balance.toFixed(2);
+                }
+            }
+        }
+
+        function showMainMenu() {
+            if (isLoggedIn) {
+                showScreen(isAdmin ? 'admin-screen' : 'main-menu');
+            } else {
+                showScreen('login-screen');
+            }
+        }
+
+        function goBack() {
+            if (currentScreen === 'main-menu' || currentScreen === 'admin-screen') {
+                logout();
+            } else if (currentScreen === 'change-pin-screen') {
+                resetPinChange();
+                showMainMenu();
+            } else {
+                showMainMenu();
+            }
+        }
+
+        async function logout() {
+            await apiCall('logout', 'POST');
+            isLoggedIn = false;
+            isAdmin = false;
+            showScreen('login-screen');
+            clearInput();
+            showMessage('Thank you for using Secure Bank ATM!', 'success');
+        }
+
+        function help() {
+            let helpMessage = '';
+            switch (currentScreen) {
+                case 'login-screen':
+                    helpMessage = 'Enter your 4-digit PIN and press ENT. Use 1234 for customer or 4321 for admin access.';
+                    break;
+                case 'main-menu':
+                    helpMessage = 'Select a transaction by clicking on the menu options.';
+                    break;
+                case 'withdraw-screen':
+                    helpMessage = 'Enter the amount you wish to withdraw (multiples of £10 only) and press ENT.';
+                    break;
+                default:
+                    helpMessage = 'Use the keypad to enter numbers and press ENT to confirm. Use function buttons for navigation.';
+            }
+            showMessage(helpMessage, 'success');
+        }
+
+        // Event Listeners Setup
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded');
+            
+            updateDisplays();
+            
+            // Keypad event listeners
+            document.querySelectorAll('.key[data-key]').forEach(key => {
+                key.addEventListener('click', function() {
+                    keyPress(this.getAttribute('data-key'));
+                });
+            });
+            
+            // Clear and Enter keys
+            document.getElementById('clear-key').addEventListener('click', clearInput);
+            document.getElementById('enter-key').addEventListener('click', enterPressed);
+            
+            // Function buttons
+            document.getElementById('back-btn').addEventListener('click', goBack);
+            document.getElementById('menu-btn').addEventListener('click', showMainMenu);
+            document.getElementById('clear-btn').addEventListener('click', clearInput);
+            document.getElementById('help-btn').addEventListener('click', help);
+            
+            // Menu items event listeners
+            document.addEventListener('click', function(event) {
+                if (event.target.classList.contains('menu-item')) {
+                    const action = event.target.getAttribute('data-action');
+                    console.log('Menu item clicked:', action);
+                    
+                    switch(action) {
+                        case 'balance':
+                            showScreen('balance-screen');
+                            loadBalance();
+                            break;
+                        case 'withdraw':
+                            showScreen('withdraw-screen');
+                            break;
+                        case 'change-pin':
+                            showScreen('change-pin-screen');
+                            break;
+                        case 'transactions':
+                            showTransactionHistory();
+                            break;
+                        case 'exit':
+                            logout();
+                            break;
+                        case 'admin-transactions':
+                            showAllTransactions();
+                            break;
+                        case 'admin-exit':
+                            logout();
+                            break;
+                    }
+                }
+            });
+            
+            // Keyboard support
+            document.addEventListener('keydown', function(event) {
+                if (event.key >= '0' && event.key <= '9') {
+                    keyPress(event.key);
+                } else if (event.key === 'Enter') {
+                    enterPressed();
+                } else if (event.key === 'Escape') {
+                    clearInput();
+                } else if (event.key === 'Backspace') {
+                    if (currentInput.length > 0) {
+                        currentInput = currentInput.slice(0, -1);
+                        updateDisplays();
+                    }
+                }
+            });
+            
+            console.log('All event listeners attached');
+        });
+    </script>
+</body>
+</html>

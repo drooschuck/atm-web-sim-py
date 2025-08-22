@@ -1,0 +1,9 @@
+[
+  {
+    "timestamp": "2025-08-22 03:07:11",
+    "type": "withdrawal",
+    "amount": 100,
+    "balance_after": 23.450000000000003,
+    "formatted": "2025-08-22 03:07:11 | Withdrawal \u00a3100.00 | Balance \u00a323.45"
+  }
+]

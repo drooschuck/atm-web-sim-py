@@ -27,6 +27,10 @@ A fully functional web-based ATM (Automated Teller Machine) simulator built with
 - **Transaction History**: Persistent transaction logging
 - **Admin Access**: Special admin mode (Password: 4321)
 
+## 🚀 Live Demo
+
+[Cash Point Simulator](https://cpsim.netlify.app/)
+
 ## 🚀 Quick Start
 
 ### Prerequisites
